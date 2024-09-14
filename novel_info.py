@@ -1,5 +1,4 @@
 import time
-
 import requests
 from bs4 import BeautifulSoup
 
@@ -42,7 +41,9 @@ def get_novel_info(base_url):
         if a_tag:
             chapter_title = a_tag.text
             chapter_url = a_tag['href']
-            chapters.append({'title': chapter_title, 'url': chapter_url})
+            # 挑选文章目录的标题，去除那些"展开全部"这种数据
+            if chapter_title.startswith("第"):
+                chapters.append({'title': chapter_title, 'url': chapter_url})
 
     return {
         'novel_name': novel_name,
@@ -61,7 +62,7 @@ def get_chapter_content(chapter_url):
     soup = BeautifulSoup(response.text, 'html.parser')
     content_tag = soup.find('div', {'id': 'chaptercontent'})
     content = content_tag.get_text(separator='\n').strip() if content_tag else '无内容'
-    print(content)
+    # print(content)
     return content
 
 
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     novel_info = get_novel_info(novel_url)
 
     if novel_info:
-        print("小说标题:", novel_info['title'])
+        print("小说标题:", novel_info['novel_name'])
         print("作者:", novel_info['author'])
         print("简介:", novel_info['description'])
         print("\n章节列表:")

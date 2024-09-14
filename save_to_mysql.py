@@ -1,14 +1,36 @@
 import mysql.connector
 
-from novel_info import get_novel_info
+from novel_info import get_novel_info, get_chapter_content
 
 
+# 向 novels表中 添加小说基本信息
 def basic_info(title, author, description):
-    # 添加记录
     cursor.execute(f"""
         INSERT INTO novels (novel_name, author, description)
-            VALUES ({title}, {author}, {description});
+            VALUES ('{title}', '{author}', '{description}');
     """)
+
+    # 提交更改
+    db.commit()
+
+
+# 向 chapters表中 添加小说章节内容
+def catalogue_content(chapters):
+    for chapter in chapters:
+        title = chapter["title"]
+        url = chapter["url"]
+        chapter_url = 'https://www.bqgda.cc' + url
+        content = get_chapter_content(chapter_url)
+
+        sql = f"""
+            INSERT INTO chapters (chapter_name, novel_id, content)
+                VALUES (%s, 1, %s);
+        """
+        param = (title, content)
+        cursor.execute(sql, param)
+
+        # 提交更改
+        db.commit()
 
 
 if __name__ == '__main__':
@@ -39,5 +61,20 @@ if __name__ == '__main__':
     novel_url = 'https://www.bqgda.cc/books/5238/'
     novel_info = get_novel_info(novel_url)
 
-    # 添加基本小说信息
-    basic_info(novel_info['novel_name'], novel_info['author'], novel_info['description'])
+    # # 添加基本小说信息
+    # basic_info(novel_info['novel_name'], novel_info['author'], novel_info['description'])
+
+    # # 创建小说章节内容表（章节号，小说号，章节名称，章节内容）
+    # cursor.execute("""
+    #     CREATE TABLE chapters (
+    #         chapter_id INT AUTO_INCREMENT PRIMARY KEY,
+    #         novel_id INT,
+    #         chapter_name VARCHAR(255) NOT NULL,
+    #         content TEXT);
+    #         """
+    #                )
+
+    catalogue_content(novel_info['chapters'])
+
+    cursor.close()
+    db.close()
